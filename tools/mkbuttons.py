@@ -7,13 +7,25 @@ Writes game/art/*.png, four times the game's own sizes, and game/src/game/ts2_bu
   pad.png                                 1024x1024, for its 128x128 controller picture (the Controls menu)
   pad_glow.png                            256x256, for the 64x64 glow drawn behind that picture
 Needs rsvg-convert (librsvg2-bin).   python3 tools/mkbuttons.py
+
+Your own controller picture instead of the drawing, for your own builds (it stays out of the repository):
+  python3 tools/mkbuttons.py --image my-controller.png
+      a controller, front view, on a white or transparent background: cut out and fitted where the game draws its
+      controller, into art/pad.png and art/pad_glow.png (the top-level art/, which git ignores). Needs Pillow and
+      numpy. build-ps5.sh then builds them in over game/art's (python3 tools/mkbuttons.py --embed FILE); delete
+      art/pad.png to go back to the drawing.
 """
+import argparse
 import os
 import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ART = os.path.join(ROOT, 'game', 'art')
+LOCAL = os.path.join(ROOT, 'art')  # your own pictures (--image), never in the repository
+# the pictures built into the program: their names there and their files
+BUILT_IN = (('Cross', 'cross'), ('Circle', 'circle'), ('Square', 'square'), ('Triangle', 'triangle'), ('Sheet', 'sheet'),
+            ('Pad', 'pad'), ('Glow', 'pad_glow'))
 
 # the PlayStation colours: Cross blue, Circle red, Square pink, Triangle green
 COLOURS = {'cross': '#8fb3ff', 'circle': '#ff6d6d', 'square': '#ff9ade', 'triangle': '#3ee0a8'}
@@ -221,12 +233,75 @@ def glow():
             f'<g filter="url(#soft)"><g transform="{place}">{outline()}</g></g>')
 
 
-def main():
+def from_image(path):
+    """art/pad.png and art/pad_glow.png from a picture of a controller, fitted as the drawing is"""
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFilter
+    im = Image.open(path).convert('RGBA')
+    a = np.asarray(im).copy()
+    if a[..., 3].min() >= 250:  # a white background: flooded from the corners, so white inside the controller stays
+        marked = im.convert('RGB')
+        w, h = marked.size
+        for xy in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]:
+            if min(marked.getpixel(xy)) >= 240:
+                ImageDraw.floodfill(marked, xy, (255, 0, 255), thresh=14)
+        m = np.asarray(marked)
+        background = (m[..., 0] == 255) & (m[..., 1] == 0) & (m[..., 2] == 255)
+        alpha = Image.fromarray(np.where(background, 0, 255).astype(np.uint8))
+        alpha = alpha.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(0.6))  # no white fringe
+        a[..., 3] = np.asarray(alpha)
+        im = Image.fromarray(a)
+    im = im.crop(im.getbbox())
+    # as the player sees it (608 x 512, twice over): as wide as the drawing, centred on (304, 266)
+    k = min(1180 / im.width, 880 / im.height)
+    size = (round(im.width * k), round(im.height * k))
+    shown = Image.new('RGBA', (1216, 1024), (0, 0, 0, 0))
+    shown.paste(im.convert('RGBa').resize(size, Image.LANCZOS).convert('RGBA'),
+                (608 - size[0] // 2, 532 - size[1] // 2))
+    pad = shown.convert('RGBa').resize((1024, 1024), Image.LANCZOS).convert('RGBA')  # narrowed to the square
+    # the glow: its outline placed as the game places the picture over the glow, widened and blurred, in white
+    outline = Image.new('L', (256, 256), 0)
+    outline.paste(pad.getchannel('A').resize((134, 128), Image.LANCZOS), (61, 64))
+    outline = outline.filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.GaussianBlur(4))
+    glow = Image.new('RGBA', (256, 256), (255, 255, 255, 0))
+    glow.putalpha(outline)
+    os.makedirs(LOCAL, exist_ok=True)
+    pad.save(os.path.join(LOCAL, 'pad.png'), optimize=True)
+    glow.save(os.path.join(LOCAL, 'pad_glow.png'), optimize=True)
+    print('mkbuttons: art/pad.png and art/pad_glow.png from', path)
+
+
+def embed(out, local):
+    """the pictures as C++ arrays: game/art's, or with local, art/'s own pad.png and pad_glow.png over them"""
+    lines = ['// written by tools/mkbuttons.py from game/art/*.png (reSplit2\'s own drawings, GPL-3.0)\n',
+             '#include <cstddef>\n\nnamespace ts2::art {\n']
+    used = []
+    for name, file in BUILT_IN:
+        path = os.path.join(ART, file + '.png')
+        own = os.path.join(LOCAL, file + '.png')
+        if local and file.startswith('pad') and os.path.isfile(os.path.join(LOCAL, 'pad.png')):
+            path = own
+            used.append('art/' + file + '.png')
+        data = open(path, 'rb').read()
+        lines.append(f'extern const unsigned char k{name}[];\n')
+        lines.append(f'extern const size_t k{name}Size = {len(data)};\n')
+        lines.append(f'const unsigned char k{name}[] = {{')
+        for i in range(0, len(data), 24):
+            lines.append('\n    ' + ','.join(str(b) for b in data[i:i + 24]) + ',')
+        lines.append('\n};\n')
+    lines.append('}  // namespace ts2::art\n')
+    text = ''.join(lines)
+    if not os.path.isfile(out) or open(out).read() != text:  # left alone when the same, so not built again
+        with open(out, 'w') as o:
+            o.write(text)
+    return used
+
+
+def draw():
     os.makedirs(ART, exist_ok=True)
-    pngs = {}
     # the 32x32 buttons: the game's fill x 1..29, y 2..29 of 32; four times larger
     for kind in COLOURS:
-        pngs[kind] = render(kind, svg(128, 128, button(kind, 61, 63, 53)))
+        render(kind, svg(128, 128, button(kind, 61, 63, 53)))
     # the 128x64 sheet: B Y X A in its top row (centres 15.5, 47, 80, 112.5; y 16.5; about 26 x 31), Start and Back
     # pills (x 5..27 and 38..60, y 34..50) with their names under them (y 56..61), and the two white arrows
     body = ''.join(button(k, cx * 4, 66, 54) for k, cx in (('circle', 15.5), ('triangle', 47), ('square', 80),
@@ -235,25 +310,28 @@ def main():
     body += pill(152, 140, 240, 196, 'PAD', 196, 242)
     body += '<path d="M286,140 L334,192 L286,244 Z" fill="#e5e5e5"/>'  # the right arrow (x 71..84, y 34..61)
     body += '<path d="M432,164 L484,216 L380,216 Z" fill="#e4e4e4"/>'  # the up arrow (x 94..121, y 41..54)
-    pngs['sheet'] = render('sheet', svg(512, 256, body))
+    render('sheet', svg(512, 256, body))
     # the Controls menu's controller (128x128, eight times larger: it is drawn large) and its glow (64x64)
-    pngs['pad'] = render('pad', svg(512, 512, controller(), 2))
-    pngs['glow'] = render('pad_glow', svg(256, 256, glow()))
-    # built into the program
+    render('pad', svg(512, 512, controller(), 2))
+    render('pad_glow', svg(256, 256, glow()))
+    # built into the program: always the drawings here, never art/'s own pictures
     out = os.path.join(ROOT, 'game', 'src', 'game', 'ts2_button_art.cpp')
-    with open(out, 'w') as o:
-        o.write('// written by tools/mkbuttons.py from game/art/*.png (reSplit2\'s own drawings, GPL-3.0)\n')
-        o.write('#include <cstddef>\n\nnamespace ts2::art {\n')
-        for name, path in pngs.items():
-            data = open(path, 'rb').read()
-            o.write(f'extern const unsigned char k{name.capitalize()}[];\n')
-            o.write(f'extern const size_t k{name.capitalize()}Size = {len(data)};\n')
-            o.write(f'const unsigned char k{name.capitalize()}[] = {{')
-            for i in range(0, len(data), 24):
-                o.write('\n    ' + ','.join(str(b) for b in data[i:i + 24]) + ',')
-            o.write('\n};\n')
-        o.write('}  // namespace ts2::art\n')
+    embed(out, local=False)
     print('mkbuttons: game/art/*.png and', os.path.relpath(out, ROOT))
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument('--image', help='a picture of a controller, for art/pad.png and art/pad_glow.png')
+    p.add_argument('--embed', metavar='FILE', help='only write the C++ arrays to FILE, art/ over game/art')
+    args = p.parse_args()
+    if args.image:
+        from_image(args.image)
+    elif args.embed:
+        used = embed(args.embed, local=True)
+        print('mkbuttons: built in', ', '.join(used) if used else 'game/art/*.png')
+    else:
+        draw()
 
 
 if __name__ == '__main__':

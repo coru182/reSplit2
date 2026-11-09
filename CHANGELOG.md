@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.7
+
+- **Your own controller picture.** `python3 tools/mkbuttons.py --image my-controller.png` fits a picture of a
+  controller (front view, white or transparent background) where the Controls menu draws its own, with its glow, into
+  `art/pad.png` (the top-level `art/`, which git ignores): `build-ps5.sh` builds it in over the drawing, as reKing's
+  `tools/mkcontroller.py --image` does. Delete `art/pad.png` to go back to the drawing.
+
 ## 0.1.6
 
 - **A new controller in the Controls menu.** The picture is redrawn: a white controller in a clean, flat style, its

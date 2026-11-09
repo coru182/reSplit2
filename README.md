@@ -207,6 +207,13 @@ cd reSplit2
 built reUndr-ps5 checkout already at hand, pass it: `REUNDR=/path/to/reUndr-ps5 ./setup.sh ...` (and the same
 `REUNDR=` for `build-ps5.sh`).
 
+Your own picture of a controller for the Controls menu, in place of the drawing, for your own builds (it stays in
+the top-level `art/`, which git ignores):
+
+```sh
+python3 tools/mkbuttons.py --image my-controller.png    # writes art/pad.png and art/pad_glow.png; then ./build-ps5.sh
+```
+
 At start the app checks the disc's `default.xbe` against the one it was built from: the same bytes, or the same
 release with a few bytes of code changed (`ps5/xbe_match.h`).
 
