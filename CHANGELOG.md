@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3
+
+- **L2 aims, R2 fires.** The Xbox game fired with both triggers (the left one is Alternate Fire, or the left gun of
+  two) and aimed with a click of the right stick. Now L2 aims and R2 fires; clicking the right stick does what L2
+  did, so nothing is lost. Set the game's own **Controls > Aim Mode** to **Hold** to aim only while L2 is held. The
+  settings menu's **Left trigger aims** (Controls page) turns it off, for the Xbox layout.
+
 ## 0.1.2
 
 - **The right speed.** The game steps its world once for each of the console's 60 Hz vertical blanks since its last

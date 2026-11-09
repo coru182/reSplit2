@@ -4,6 +4,7 @@
 #include <cstring>
 #include <string>
 
+#include "core/input.h"
 #include "core/log.h"
 #include "cpu/x86_context.h"
 #include "kernel/kernel.h"
@@ -13,6 +14,21 @@ namespace ts2 {
 
 // [graphics] soft_filter: the console's soft filter, off by default (below)
 bool g_soft_filter = false;
+// [input] left_trigger_aims: the left trigger and the right stick's click trade places (Pad below)
+bool g_left_trigger_aims = true;
+
+// The Xbox game fires with both triggers (the left one is Alternate Fire, or the left gun of two) and aims with a
+// click of the right stick. With left_trigger_aims on, the left trigger does what the right stick's click did (Aim:
+// held, or a toggle, as the game's Controls > Aim Mode says) and the click does what the left trigger did, so no
+// action is lost.
+void Pad(int port, input::Pad& p) {
+    (void)port;
+    if (!g_left_trigger_aims || !p.connected) return;
+    constexpr uint16_t kRightThumb = 0x80;
+    const bool trigger = p.analog[6] > 40, click = (p.buttons & kRightThumb) != 0;
+    p.buttons = trigger ? uint16_t(p.buttons | kRightThumb) : uint16_t(p.buttons & ~kRightThumb);
+    p.analog[6] = click ? 255 : 0;
+}
 
 namespace {
 

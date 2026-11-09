@@ -36,12 +36,12 @@
 > Please don't use this project with pirated copies of the game.
 
 > [!NOTE]
-> **Early test builds.** The 0.1.x releases are for testing on real consoles. The story's first level, the menus,
-> profiles and saves have been played; expect rough edges elsewhere, and please [report](#reporting-a-problem) what
-> you find.
+> **Early test builds.** The 0.1.x releases are for testing on real consoles. The story's first level alone and in
+> two-player split screen, the menus, profiles and saves have been played; expect rough edges elsewhere, and please
+> [report](#reporting-a-problem) what you find.
 
 <p align="center">
-  <img src="docs/media/siberia.jpg" alt="Siberia, 1990: the Oblask dam behind a snowy compound, seen from the mouth of a tunnel, with the scanner in hand" width="100%">
+  <img src="docs/media/siberia.jpg" alt="Siberia, 1990: a sniper rifle in hand at the mouth of a tunnel, a guard on a snowy compound beyond it" width="100%">
   <br>
   <sub>Siberia, captured on a PS5 at 3840x2160.</sub>
 </p>
@@ -64,14 +64,36 @@ services.
   shape, with bars at the sides. The lens flares, motion blur and screen effects are the game's.
 - **PS5 in the game's text.** "Please don't turn off your PS5 console", and your saves live on "PS5 storage".
 - **Four-player split screen.** Sign in more users on the PS5 (guests are enough) and turn on their controllers.
+- **L2 aims, R2 fires**, as in today's shooters (the menu brings back the Xbox layout).
 - **An in-game menu.** L3 + R3 at any time: render resolution, V-Sync, frame rate counter, texture filtering, the
-  soft filter, vibration, stick deadzone and trigger threshold.
+  soft filter, the trigger layout, vibration, stick deadzone and trigger threshold.
 - **Disc image install.** Copy your `.iso` to the console and start the app: it does the rest.
+
+## Screenshots
+
+All captured on a PS5 at 3840x2160.
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/media/tunnel.jpg" alt="The tunnel at the start of Siberia, the snowy compound at its end"></td>
-    <td width="50%"><img src="docs/media/crates.jpg" alt="Crates in the snow outside the compound, a pistol in hand"></td>
+    <td width="50%"><img src="docs/media/coop-sniper.jpg" alt="Two-player split screen: player 1 aims a sniper rifle at a guard on the compound, player 2 waits in the tunnel"></td>
+    <td width="50%"><img src="docs/media/coop-tunnel.jpg" alt="Two-player split screen: player 1 with the scanner in the tunnel, player 2 with a sniper rifle and an enemy beside the crates"></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><sub><b>Co-op story in split screen</b>, two DualSense controllers on one PS5.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/media/scanner.jpg" alt="The Siberia tunnel with the scanner in hand, weapons on the floor"></td>
+    <td width="50%"><img src="docs/media/title.jpg" alt="The title screen: 1 Player, 2 Players, 3 Players, 4 Players"></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><sub><b>Single player</b>: Siberia's tunnel, and the title screen.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/media/storage.jpg" alt="Select Storage Location: PS5 storage"></td>
+    <td width="50%"><img src="docs/media/profile.jpg" alt="Enter Name: a new profile named Dr. Peabody"></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><sub><b>Profiles and saves</b>, kept on the PS5's own storage.</sub></td>
   </tr>
 </table>
 
@@ -112,10 +134,16 @@ game is missing, damaged, or another game or release, a screen says so: press Cr
 | --- | --- |
 | A B X Y | Cross Circle Square Triangle |
 | Black / White | R1 / L1 |
-| Triggers | R2 / L2 |
+| Right trigger (fire) | R2 |
+| Right stick click (aim) | **L2** |
+| Left trigger (Alternate Fire, the left gun of two) | R3 |
 | Start / Back | Options / touchpad click |
-| Stick clicks | L3 / R3 |
+| Left stick click | L3 |
 | | **L3 + R3:** the settings menu |
+
+**L2 aims, R2 fires.** On the Xbox both triggers fired and a click of the right stick aimed; here L2 and the click
+trade places, so nothing is lost. To aim only while L2 is held, set the game's own **Controls > Aim Mode** to
+**Hold**. The settings menu's **Left trigger aims** turns it off, for the Xbox layout.
 
 Player 1 is the user who started the app. Players 2 to 4 are the other signed-in users whose controllers are on, in
 the order the PS5 lists them.
@@ -128,7 +156,7 @@ Circle, Options or L3 + R3 go back to the game. Changes apply at once and are sa
 | Page | Settings |
 | --- | --- |
 | **Picture** | Render resolution (1080p, 1620p, 4K), V-Sync, frame rate counter, texture filtering (16x by default) and sharpness, smooth menus and HUD, the Xbox soft filter (off by default) |
-| **Controls** | Vibration, stick deadzone, trigger threshold |
+| **Controls** | Left trigger aims, vibration, stick deadzone, trigger threshold |
 
 The app's `README.txt` describes every setting.
 
@@ -197,7 +225,8 @@ own `.iso`. Only whoever makes a release builds it from their own disc, once per
   SDK: `config/game.toml`, the recompiler's input (where the XDK library functions the runtime replaces sit in
   TimeSplitters 2, found with Cxbx-Reloaded's
   [XbSymbolDatabase](https://github.com/Cxbx-Reloaded/XbSymbolDatabase) and by hand, and the game's hooks), and
-  `src/`: the hooks (the disc check, one frame per 60 Hz blank, the soft filter switch, the PS5 in the game's text).
+  `src/`: the hooks (the disc check, one frame per 60 Hz blank, the soft filter switch, the PS5 in the game's text,
+  the trigger layout).
 - `patches/athelas-ps5.patch`: the SDK's changes for the PS5, from reKing: guest memory on 16 KiB pages, threads,
   the Vulkan surface on VideoOut, a logging switch.
 - `patches/ts2-sdk.patch`: TimeSplitters 2's: XDK 4721's layout, the vertex and pixel shader programs it sets
