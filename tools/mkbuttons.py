@@ -4,6 +4,8 @@
 Writes game/art/*.png, four times the game's own sizes, and game/src/game/ts2_button_art.cpp with them built in:
   cross / circle / square / triangle.png  128x128, for the game's 32x32 A / B / X / Y buttons
   sheet.png                               512x256, for its 128x64 sheet: B Y X A, Start and Back, two arrows
+  pad.png                                 1024x1024, for its 128x128 controller picture (the Controls menu)
+  pad_glow.png                            256x256, for the 64x64 glow drawn behind that picture
 Needs rsvg-convert (librsvg2-bin).   python3 tools/mkbuttons.py
 """
 import os
@@ -67,8 +69,9 @@ def pill(x0, y0, x1, y1, label, lx, ly):
         fill="#ffffff" letter-spacing="0.5">{label}</text>'''
 
 
-def svg(w, h, body):
-    return f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">{GLOW}{body}</svg>'
+def svg(w, h, body, scale=1):
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w*scale}" height="{h*scale}" viewBox="0 0 {w} {h}">'
+            f'{GLOW}{body}</svg>')
 
 
 def render(name, text):
@@ -79,6 +82,112 @@ def render(name, text):
     subprocess.run(['rsvg-convert', src, '-o', out], check=True)
     os.remove(src)
     return out
+
+
+# The controller picture: reSplit2's own controller, graphite with the menus' blue, PlayStation buttons on it. The
+# game draws its 128x128 picture 152 wide and 128 tall at (74, 145) of its 640x480 screen, so the controller is drawn
+# in that shape (608 x 512, centre 304, 266) and narrowed to the square; the outline below is in a 512 x 512 space
+# around (256, 266), drawn 1.2 times larger.
+FIT = 'scale(0.842105,1) translate(304,266) scale(1.2) translate(-256,-266)'
+
+BODY = ('M256,128 C320,128 360,120 392,118 C440,116 474,138 484,180 C496,232 504,300 500,360 C496,410 470,432 440,430 '
+        'C410,428 392,404 376,374 C360,346 338,336 312,336 L200,336 C174,336 152,346 136,374 C120,404 102,428 72,430 '
+        'C42,432 16,410 12,360 C8,300 16,232 28,180 C38,138 72,116 120,118 C152,120 192,128 256,128 Z')
+SHOULDERS = (70, 330)  # the shoulder buttons' left edges (112 x 40 from y 96)
+
+PAD_DEFS = '''<defs>
+    <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a505b"/><stop offset="0.35" stop-color="#2b2f37"/><stop offset="1" stop-color="#121418"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="50%" cy="20%" r="60%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="well" cx="50%" cy="45%" r="55%">
+      <stop offset="0" stop-color="#050608"/><stop offset="0.8" stop-color="#14171c"/><stop offset="1" stop-color="#2a2e36"/>
+    </radialGradient>
+    <radialGradient id="cap" cx="42%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#4b515c"/><stop offset="0.6" stop-color="#22262d"/><stop offset="1" stop-color="#0e1013"/>
+    </radialGradient>
+    <linearGradient id="shoulder" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3c414b"/><stop offset="1" stop-color="#17191e"/>
+    </linearGradient>
+  </defs>'''
+
+
+def stick(cx, cy):
+    return f'''
+  <circle cx="{cx}" cy="{cy+4}" r="44" fill="#000" opacity="0.5"/>
+  <circle cx="{cx}" cy="{cy}" r="44" fill="url(#well)" stroke="#07080a" stroke-width="3"/>
+  <circle cx="{cx}" cy="{cy}" r="31" fill="url(#cap)" stroke="#0a0b0e" stroke-width="2.5"/>
+  <circle cx="{cx}" cy="{cy}" r="22" fill="none" stroke="#5c6470" stroke-opacity="0.5" stroke-width="2"/>
+  <ellipse cx="{cx-6}" cy="{cy-14}" rx="16" ry="8" fill="#fff" opacity="0.16"/>'''
+
+
+def dpad(cx, cy):
+    a, b = 13, 36  # an arm's half width, its reach
+    p = (f'M{cx-a},{cy-b} L{cx+a},{cy-b} L{cx+a},{cy-a} L{cx+b},{cy-a} L{cx+b},{cy+a} L{cx+a},{cy+a} '
+         f'L{cx+a},{cy+b} L{cx-a},{cy+b} L{cx-a},{cy+a} L{cx-b},{cy+a} L{cx-b},{cy-a} L{cx-a},{cy-a} Z')
+    arrows = ''
+    for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+        tx, ty = cx + dx * 25, cy + dy * 25
+        pts = (f'{tx},{ty+dy*7} {tx-6},{ty-dy*3} {tx+6},{ty-dy*3}' if dx == 0 else
+               f'{tx+dx*7},{ty} {tx-dx*3},{ty-6} {tx-dx*3},{ty+6}')
+        arrows += f'<polygon points="{pts}" fill="#8b93a0" opacity="0.8"/>'
+    return f'''
+  <circle cx="{cx}" cy="{cy}" r="50" fill="url(#well)" opacity="0.9"/>
+  <path d="{p}" transform="translate(0,4)" fill="#000" opacity="0.5"/>
+  <path d="{p}" fill="url(#cap)" stroke="#07080a" stroke-width="3" stroke-linejoin="round"/>
+  {arrows}'''
+
+
+def small_pill(cx, cy):
+    return f'''
+  <rect x="{cx-7}" y="{cy-15}" width="14" height="30" rx="7" fill="#0d0f12" stroke="#050607" stroke-width="2"/>
+  <rect x="{cx-4}" y="{cy-12}" width="5" height="12" rx="2.5" fill="#fff" opacity="0.15"/>'''
+
+
+def controller():
+    s = PAD_DEFS
+    for x in SHOULDERS:  # L1 and R1, behind the body
+        s += f'<rect x="{x}" y="96" width="112" height="40" rx="18" fill="url(#shoulder)" stroke="#07080a" stroke-width="3"/>'
+        s += f'<rect x="{x+12}" y="101" width="88" height="8" rx="4" fill="#fff" opacity="0.14"/>'
+    s += f'<path d="{BODY}" transform="translate(0,6)" fill="#000" opacity="0.55"/>'
+    s += f'<path d="{BODY}" fill="url(#shell)" stroke="#07080a" stroke-width="4"/>'
+    s += f'<path d="{BODY}" fill="url(#sheen)"/>'
+    # a line of the menus' blue along the top
+    s += ('<path d="M136,140 C180,146 216,150 256,150 C296,150 332,146 376,140" fill="none" stroke="#5fb4ff" '
+          'stroke-width="4" stroke-linecap="round" opacity="0.85" filter="url(#glow)"/>')
+    # the centre panel (the touch pad), the two small buttons beside it and the centre button
+    s += ('<path d="M196,170 L316,170 C332,170 340,180 338,196 L330,262 C328,276 318,284 304,284 L208,284 '
+          'C194,284 184,276 182,262 L174,196 C172,180 180,170 196,170 Z" fill="#181b20" stroke="#07080a" '
+          'stroke-width="3" opacity="0.95"/>')
+    s += '<path d="M200,178 L312,178" stroke="#fff" stroke-opacity="0.08" stroke-width="6" stroke-linecap="round"/>'
+    s += small_pill(160, 186) + small_pill(352, 186)
+    s += ('<circle cx="256" cy="246" r="20" fill="url(#cap)" stroke="#07080a" stroke-width="3"/>'
+          '<circle cx="256" cy="246" r="13" fill="none" stroke="#5fb4ff" stroke-width="3" opacity="0.9" '
+          'filter="url(#glow)"/>')
+    s += dpad(110, 222)
+    s += stick(186, 318) + stick(326, 318)
+    # the face buttons: Triangle at the top, Circle right, Cross at the bottom, Square left
+    for kind, dx, dy in (('triangle', 0, -1), ('circle', 1, 0), ('cross', 0, 1), ('square', -1, 0)):
+        s += button(kind, 402 + dx * 36, 222 + dy * 36, 21)
+    return f'<g transform="{FIT}">{s}</g>'
+
+
+def outline():
+    """the controller's shape in white, for its glow"""
+    s = f'<path d="{BODY}" fill="#fff"/>'
+    s += ''.join(f'<rect x="{x}" y="96" width="112" height="40" rx="18" fill="#fff"/>' for x in SHOULDERS)
+    return f'<g transform="{FIT}">{s}</g>'
+
+
+def glow():
+    """the 64x64 glow is drawn 290 x 256 from (5, 81), the picture 152 x 128 from (74, 145): the outline placed as the
+    game places the picture over it, widened a little and blurred"""
+    place = f'translate({69/290*256:.3f},64) scale({152/290*256/512:.6f},0.25)'
+    return (f'<defs><filter id="soft" x="-30%" y="-30%" width="160%" height="160%">'
+            f'<feMorphology operator="dilate" radius="3"/><feGaussianBlur stdDeviation="4"/></filter></defs>'
+            f'<g filter="url(#soft)"><g transform="{place}">{outline()}</g></g>')
 
 
 def main():
@@ -96,6 +205,9 @@ def main():
     body += '<path d="M286,140 L334,192 L286,244 Z" fill="#e5e5e5"/>'  # the right arrow (x 71..84, y 34..61)
     body += '<path d="M432,164 L484,216 L380,216 Z" fill="#e4e4e4"/>'  # the up arrow (x 94..121, y 41..54)
     pngs['sheet'] = render('sheet', svg(512, 256, body))
+    # the Controls menu's controller (128x128, eight times larger: it is drawn large) and its glow (64x64)
+    pngs['pad'] = render('pad', svg(512, 512, controller(), 2))
+    pngs['glow'] = render('pad_glow', svg(256, 256, glow()))
     # built into the program
     out = os.path.join(ROOT, 'game', 'src', 'game', 'ts2_button_art.cpp')
     with open(out, 'w') as o:

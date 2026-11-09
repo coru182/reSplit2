@@ -1,8 +1,9 @@
-// TimeSplitters 2 on a PS5: the console named as a PS5 in the game's own text, and the Xbox's soft filter as a
-// setting.
+// TimeSplitters 2 on a PS5: the console named as a PS5 in the game's own text, the controller's parts named as the
+// DualSense's, and the Xbox's soft filter as a setting.
 #include <cstdint>
 #include <cstring>
 #include <string>
+#include <vector>
 
 #include "core/input.h"
 #include "core/log.h"
@@ -17,12 +18,16 @@ bool g_soft_filter = false;
 // [input] left_trigger_aims: the left trigger and the right stick's click trade places (Pad below)
 bool g_left_trigger_aims = true;
 
+void Labels(bool aims);  // below
+int g_labels = -1;       // the left_trigger_aims the names were last written for (-1: not yet)
+
 // The Xbox game fires with both triggers (the left one is Alternate Fire, or the left gun of two) and aims with a
 // click of the right stick. With left_trigger_aims on, the left trigger does what the right stick's click did (Aim:
 // held, or a toggle, as the game's Controls > Aim Mode says) and the click does what the left trigger did, so no
 // action is lost.
 void Pad(int port, input::Pad& p) {
     (void)port;
+    if (g_labels >= 0 && g_labels != int(g_left_trigger_aims)) Labels(g_left_trigger_aims);  // the setting changed
     if (!g_left_trigger_aims || !p.connected) return;
     constexpr uint16_t kRightThumb = 0x80;
     const bool trigger = p.analog[6] > 40, click = (p.buttons & kRightThumb) != 0;
@@ -62,7 +67,76 @@ std::string Rewrite(const std::string& s) {
     return out;
 }
 
+// The Controls menu's configuration lists the Xbox controller's parts and what each does; they are named as the
+// DualSense's, with the names the PS2 version used ("L1 button"...), and so are the sticks and triggers in MapMaker's
+// help. The left trigger and the right stick's click trade places with left_trigger_aims, so their names do too
+// (`aims`). The game runs in English here (the console's language setting), so only its English text is renamed.
+struct Name {
+    const char* from;
+    const char* to;
+    const char* aims;  // with left_trigger_aims on, if not as `to`
+};
+const Name kParts[] = {{"Left trigger", "L2 button", "R3 button"},
+                       {"Right trigger", "R2 button", nullptr},
+                       {"White button", "L1 button", nullptr},
+                       {"Black button", "R1 button", nullptr},
+                       {"Left thumbstick button", "L3 button", nullptr},
+                       {"Right thumbstick button", "R3 button", "L2 button"},
+                       {"Left thumbstick", "Left stick", nullptr},
+                       {"Right thumbstick", "Right stick", nullptr}};
+// in MapMaker's help ("Left Thumbstick - Move cursor\nRight Thumbstick - Scroll map\nLeft / Right trigger - ...")
+const char kHelp[] = "Left Thumbstick - ";
+const Name kInHelp[] = {{"Left Thumbstick", "Left stick", nullptr},
+                        {"Right Thumbstick", "Right stick", nullptr},
+                        {"Left / Right trigger", "L2 / R2", "R3 / R2"}};
+
+struct Text {
+    uint32_t at;           // where the string is
+    std::string original;  // what it said
+};
+std::vector<Text> g_names;
+
+const char* To(const Name& n, bool aims) { return aims && n.aims ? n.aims : n.to; }
+
+std::string Named(const std::string& s, bool aims) {
+    for (const Name& n : kParts)
+        if (s == n.from) return To(n, aims);
+    std::string out = s;
+    for (const Name& n : kInHelp)
+        for (size_t at; (at = out.find(n.from)) != std::string::npos;) out.replace(at, std::strlen(n.from), To(n, aims));
+    return out;
+}
+
+// every string in the game's text that is one of kParts or starts as kHelp does
+void FindNames() {
+    const uint8_t* p = static_cast<const uint8_t*>(kernel::HostPtr(kTextFrom));
+    const size_t n = kTextTo - kTextFrom;
+    for (size_t s = 1; s < n; s++) {
+        if (p[s - 1] || !p[s]) continue;  // a string starts after a 0
+        size_t e = s;
+        while (e < n && p[e]) e++;
+        if (e >= n) break;
+        std::string text(reinterpret_cast<const char*>(p + s), e - s);
+        bool part = false;
+        for (const Name& name : kParts) part = part || text == name.from;
+        if (part || text.rfind(kHelp, 0) == 0) g_names.push_back({kTextFrom + uint32_t(s), text});
+        s = e;
+    }
+}
+
 }  // namespace
+
+// the names written for left_trigger_aims (in place: each is shorter than the Xbox's, the rest of the string zeroed)
+void Labels(bool aims) {
+    for (const Text& t : g_names) {
+        std::string now = Named(t.original, aims);
+        if (now.size() > t.original.size()) continue;
+        uint8_t* p = static_cast<uint8_t*>(kernel::HostPtr(t.at));
+        std::memcpy(p, now.data(), now.size());
+        std::memset(p + now.size(), 0, t.original.size() - now.size());
+    }
+    g_labels = int(aims);
+}
 
 void PlayStationButtons();  // ts2_buttons.cpp
 
@@ -87,6 +161,9 @@ void PatchText() {
         i = e;
     }
     LOGI("ts2: %d of the game's strings name the PS5", changed);
+    FindNames();
+    Labels(g_left_trigger_aims);
+    LOGI("ts2: %zu of the game's strings name the DualSense's buttons and sticks", g_names.size());
 }
 
 }  // namespace ts2

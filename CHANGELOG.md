@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.5
+
+- **A PlayStation controller in the Controls menu.** The picture of the Xbox controller beside the button layout,
+  and the glow behind it, are a PlayStation-style controller: reSplit2's own drawing, eight times sharper, in the
+  menus' dark blue.
+- **The DualSense's names.** The layout names the buttons as the DualSense's, with the PS2 version's names: L1 and R1
+  for White and Black, R2 for the right trigger, L3 and R3 for the stick clicks, "Left stick" and "Right stick". With
+  **Left trigger aims** on, the left trigger's line says R3 and the right stick click's says L2, as they are swapped;
+  turning the setting off names them back at once. MapMaker's help says the same.
+
 ## 0.1.4
 
 - **PlayStation buttons.** The menus' and prompts' Xbox buttons are drawn as PlayStation ones, four times sharper:
