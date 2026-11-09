@@ -1,4 +1,4 @@
-reSplit2 0.1.1 - TimeSplitters 2 (US Xbox), recompiled for the PS5
+reSplit2 0.1.2 - TimeSplitters 2 (US Xbox), recompiled for the PS5
 ==================================================================
 
 A test build. An unofficial fan port: the original Xbox game's code, statically recompiled into a native PS5 app.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2
+
+- **The right speed.** The game steps its world once for each of the console's 60 Hz vertical blanks since its last
+  frame, and at least once a frame. On a 120 Hz TV (or with V-Sync off) the PS5 drew more than 60 frames a second, so
+  everything moved too fast. Each frame now waits for the next blank, as the Xbox's display kept it: 60 fps at the
+  game's own speed on any TV.
+
 ## 0.1.1
 
 - **A sharp picture.** Every frame of play, the game blended its finished picture over itself one console pixel

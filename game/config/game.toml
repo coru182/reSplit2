@@ -284,3 +284,7 @@ XPP_MemoryUnitType          = 0x2141A8  # xbsymdb
 at = 0x001D1F7F
 call = "TS2_DiscCheckFailed"
 on_true = 0x001D1F89
+
+[[hook]]  # the frame timer reads the vertical blank count: at most one frame per 60 Hz blank, as the Xbox's Swap kept it
+at = 0x001AE009
+call = "TS2_FramePace"
