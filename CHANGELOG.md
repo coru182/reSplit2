@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.6
+
+- **A new controller in the Controls menu.** The picture is redrawn: a white controller in a clean, flat style, its
+  face buttons white with the symbols in colour, dark sticks and shoulder buttons (reSplit2's own drawing, as before).
+
 ## 0.1.5
 
 - **A PlayStation controller in the Controls menu.** The picture of the Xbox controller beside the button layout,

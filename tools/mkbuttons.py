@@ -84,100 +84,131 @@ def render(name, text):
     return out
 
 
-# The controller picture: reSplit2's own controller, graphite with the menus' blue, PlayStation buttons on it. The
-# game draws its 128x128 picture 152 wide and 128 tall at (74, 145) of its 640x480 screen, so the controller is drawn
-# in that shape (608 x 512, centre 304, 266) and narrowed to the square; the outline below is in a 512 x 512 space
-# around (256, 266), drawn 1.2 times larger.
+# The controller picture: reSplit2's own controller, white with PlayStation buttons on it. The game draws its
+# 128x128 picture 152 wide and 128 tall at (74, 145) of its 640x480 screen, so the controller is drawn in that shape
+# (608 x 512, centre 304, 266) and narrowed to the square; the drawing below is in a 512 x 512 space around
+# (256, 266), drawn 1.2 times larger.
 FIT = 'scale(0.842105,1) translate(304,266) scale(1.2) translate(-256,-266)'
 
-BODY = ('M256,128 C320,128 360,120 392,118 C440,116 474,138 484,180 C496,232 504,300 500,360 C496,410 470,432 440,430 '
-        'C410,428 392,404 376,374 C360,346 338,336 312,336 L200,336 C174,336 152,346 136,374 C120,404 102,428 72,430 '
-        'C42,432 16,410 12,360 C8,300 16,232 28,180 C38,138 72,116 120,118 C152,120 192,128 256,128 Z')
-SHOULDERS = (70, 330)  # the shoulder buttons' left edges (112 x 40 from y 96)
+
+def mirrored(right):
+    """a closed outline symmetric about x 256, from its right half: a start, then cubic segments (c1, c2, end)"""
+    start, segs = right[0], right[1:]
+    d = f'M{start[0]},{start[1]} ' + ''.join(f'C{c1[0]},{c1[1]} {c2[0]},{c2[1]} {e[0]},{e[1]} ' for c1, c2, e in segs)
+    ends = [start] + [e for _, _, e in segs]
+    for i in range(len(segs) - 1, -1, -1):  # back along the left half
+        c1, c2, _ = segs[i]
+        d += f'C{512-c2[0]},{c2[1]} {512-c1[0]},{c1[1]} {512-ends[i][0]},{ends[i][1]} '
+    return d + 'Z'
+
+
+BODY = mirrored([(256, 340),
+                 ((290, 340), (318, 340), (338, 346)),
+                 ((362, 354), (378, 378), (394, 404)),
+                 ((410, 428), (430, 440), (452, 438)),
+                 ((486, 434), (504, 404), (504, 360)),
+                 ((504, 296), (496, 228), (482, 184)),
+                 ((470, 146), (438, 124), (396, 124)),
+                 ((350, 124), (300, 134), (256, 134))])
+SHOULDERS = (78, 322)  # L1 and R1: 112 x 40 from y 104
+
+# the symbols a shade deeper than the prompts' (COLOURS), to stand out on white
+PAD_COLOURS = {'triangle': '#1aa57c', 'circle': '#e5484d', 'cross': '#4a7de6', 'square': '#d45aae'}
 
 PAD_DEFS = '''<defs>
-    <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#4a505b"/><stop offset="0.35" stop-color="#2b2f37"/><stop offset="1" stop-color="#121418"/>
-    </linearGradient>
-    <radialGradient id="sheen" cx="50%" cy="20%" r="60%">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="well" cx="50%" cy="45%" r="55%">
-      <stop offset="0" stop-color="#050608"/><stop offset="0.8" stop-color="#14171c"/><stop offset="1" stop-color="#2a2e36"/>
-    </radialGradient>
-    <radialGradient id="cap" cx="42%" cy="35%" r="70%">
-      <stop offset="0" stop-color="#4b515c"/><stop offset="0.6" stop-color="#22262d"/><stop offset="1" stop-color="#0e1013"/>
-    </radialGradient>
-    <linearGradient id="shoulder" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#3c414b"/><stop offset="1" stop-color="#17191e"/>
-    </linearGradient>
-  </defs>'''
+ <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#fbfcfd"/><stop offset="0.55" stop-color="#eceff3"/><stop offset="1" stop-color="#cfd4db"/>
+ </linearGradient>
+ <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5b6470" stop-opacity="0.35"/>
+ </linearGradient>
+ <radialGradient id="cap" cx="45%" cy="35%" r="70%">
+  <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e1e5ea"/>
+ </radialGradient>
+ <radialGradient id="stick" cx="50%" cy="40%" r="60%">
+  <stop offset="0" stop-color="#3d424b"/><stop offset="1" stop-color="#1d2025"/>
+ </radialGradient>
+ <radialGradient id="stickcap" cx="45%" cy="38%" r="65%">
+  <stop offset="0" stop-color="#4a5059"/><stop offset="1" stop-color="#262a30"/>
+ </radialGradient>
+ <linearGradient id="shoulder" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#4a4f58"/><stop offset="1" stop-color="#25282e"/>
+ </linearGradient>
+ <filter id="shade" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="6"/></filter>
+</defs>'''
+
+
+def face(kind, cx, cy, r):
+    """a white face button with its symbol in its colour"""
+    c = PAD_COLOURS[kind]
+    s, w = r * 0.5, r * 0.16
+    if kind == 'cross':
+        sym = (f'<path d="M{cx-s},{cy-s} L{cx+s},{cy+s} M{cx+s},{cy-s} L{cx-s},{cy+s}" stroke="{c}" '
+               f'stroke-width="{w}" stroke-linecap="round"/>')
+    elif kind == 'circle':
+        sym = f'<circle cx="{cx}" cy="{cy}" r="{s*0.95}" stroke="{c}" stroke-width="{w}" fill="none"/>'
+    elif kind == 'square':
+        q = s * 0.8
+        sym = (f'<rect x="{cx-q}" y="{cy-q}" width="{2*q}" height="{2*q}" rx="{w*0.3}" stroke="{c}" '
+               f'stroke-width="{w}" fill="none"/>')
+    else:
+        t = s * 1.05
+        sym = (f'<path d="M{cx},{cy-t} L{cx+t*0.98},{cy+t*0.7} L{cx-t*0.98},{cy+t*0.7} Z" stroke="{c}" '
+               f'stroke-width="{w}" stroke-linejoin="round" fill="none"/>')
+    return (f'<circle cx="{cx}" cy="{cy+2.5}" r="{r}" fill="#9aa2ad" opacity="0.6"/>'
+            f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="url(#cap)" stroke="#8a929c" stroke-width="2"/>{sym}')
 
 
 def stick(cx, cy):
-    return f'''
-  <circle cx="{cx}" cy="{cy+4}" r="44" fill="#000" opacity="0.5"/>
-  <circle cx="{cx}" cy="{cy}" r="44" fill="url(#well)" stroke="#07080a" stroke-width="3"/>
-  <circle cx="{cx}" cy="{cy}" r="31" fill="url(#cap)" stroke="#0a0b0e" stroke-width="2.5"/>
-  <circle cx="{cx}" cy="{cy}" r="22" fill="none" stroke="#5c6470" stroke-opacity="0.5" stroke-width="2"/>
-  <ellipse cx="{cx-6}" cy="{cy-14}" rx="16" ry="8" fill="#fff" opacity="0.16"/>'''
+    return (f'<circle cx="{cx}" cy="{cy}" r="46" fill="#c9ced6" stroke="#9aa1ab" stroke-width="2"/>'
+            f'<circle cx="{cx}" cy="{cy+3}" r="36" fill="#14161a" opacity="0.35"/>'
+            f'<circle cx="{cx}" cy="{cy}" r="36" fill="url(#stick)" stroke="#1b1e23" stroke-width="2.5"/>'
+            f'<circle cx="{cx}" cy="{cy}" r="25" fill="url(#stickcap)" stroke="#202329" stroke-width="2"/>'
+            f'<ellipse cx="{cx-5}" cy="{cy-13}" rx="13" ry="6" fill="#fff" opacity="0.12"/>')
 
 
 def dpad(cx, cy):
-    a, b = 13, 36  # an arm's half width, its reach
+    a, b = 14, 38  # an arm's half width, its reach
     p = (f'M{cx-a},{cy-b} L{cx+a},{cy-b} L{cx+a},{cy-a} L{cx+b},{cy-a} L{cx+b},{cy+a} L{cx+a},{cy+a} '
          f'L{cx+a},{cy+b} L{cx-a},{cy+b} L{cx-a},{cy+a} L{cx-b},{cy+a} L{cx-b},{cy-a} L{cx-a},{cy-a} Z')
     arrows = ''
     for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
-        tx, ty = cx + dx * 25, cy + dy * 25
-        pts = (f'{tx},{ty+dy*7} {tx-6},{ty-dy*3} {tx+6},{ty-dy*3}' if dx == 0 else
-               f'{tx+dx*7},{ty} {tx-dx*3},{ty-6} {tx-dx*3},{ty+6}')
-        arrows += f'<polygon points="{pts}" fill="#8b93a0" opacity="0.8"/>'
-    return f'''
-  <circle cx="{cx}" cy="{cy}" r="50" fill="url(#well)" opacity="0.9"/>
-  <path d="{p}" transform="translate(0,4)" fill="#000" opacity="0.5"/>
-  <path d="{p}" fill="url(#cap)" stroke="#07080a" stroke-width="3" stroke-linejoin="round"/>
-  {arrows}'''
-
-
-def small_pill(cx, cy):
-    return f'''
-  <rect x="{cx-7}" y="{cy-15}" width="14" height="30" rx="7" fill="#0d0f12" stroke="#050607" stroke-width="2"/>
-  <rect x="{cx-4}" y="{cy-12}" width="5" height="12" rx="2.5" fill="#fff" opacity="0.15"/>'''
+        tx, ty = cx + dx * 26, cy + dy * 26
+        pts = (f'{tx},{ty+dy*6} {tx-5.5},{ty-dy*3} {tx+5.5},{ty-dy*3}' if dx == 0 else
+               f'{tx+dx*6},{ty} {tx-dx*3},{ty-5.5} {tx-dx*3},{ty+5.5}')
+        arrows += f'<polygon points="{pts}" fill="#3a3f47"/>'
+    return (f'<path d="{p}" transform="translate(0,3)" fill="#9aa2ad" opacity="0.6"/>'
+            f'<path d="{p}" fill="url(#cap)" stroke="#8a929c" stroke-width="2" stroke-linejoin="round"/>'
+            f'<circle cx="{cx}" cy="{cy}" r="6" fill="#d3d8df"/>{arrows}')
 
 
 def controller():
     s = PAD_DEFS
-    for x in SHOULDERS:  # L1 and R1, behind the body
-        s += f'<rect x="{x}" y="96" width="112" height="40" rx="18" fill="url(#shoulder)" stroke="#07080a" stroke-width="3"/>'
-        s += f'<rect x="{x+12}" y="101" width="88" height="8" rx="4" fill="#fff" opacity="0.14"/>'
-    s += f'<path d="{BODY}" transform="translate(0,6)" fill="#000" opacity="0.55"/>'
-    s += f'<path d="{BODY}" fill="url(#shell)" stroke="#07080a" stroke-width="4"/>'
-    s += f'<path d="{BODY}" fill="url(#sheen)"/>'
-    # a line of the menus' blue along the top
-    s += ('<path d="M136,140 C180,146 216,150 256,150 C296,150 332,146 376,140" fill="none" stroke="#5fb4ff" '
-          'stroke-width="4" stroke-linecap="round" opacity="0.85" filter="url(#glow)"/>')
-    # the centre panel (the touch pad), the two small buttons beside it and the centre button
-    s += ('<path d="M196,170 L316,170 C332,170 340,180 338,196 L330,262 C328,276 318,284 304,284 L208,284 '
-          'C194,284 184,276 182,262 L174,196 C172,180 180,170 196,170 Z" fill="#181b20" stroke="#07080a" '
-          'stroke-width="3" opacity="0.95"/>')
-    s += '<path d="M200,178 L312,178" stroke="#fff" stroke-opacity="0.08" stroke-width="6" stroke-linecap="round"/>'
-    s += small_pill(160, 186) + small_pill(352, 186)
-    s += ('<circle cx="256" cy="246" r="20" fill="url(#cap)" stroke="#07080a" stroke-width="3"/>'
-          '<circle cx="256" cy="246" r="13" fill="none" stroke="#5fb4ff" stroke-width="3" opacity="0.9" '
-          'filter="url(#glow)"/>')
-    s += dpad(110, 222)
-    s += stick(186, 318) + stick(326, 318)
+    for x in SHOULDERS:  # behind the body
+        s += f'<rect x="{x}" y="104" width="112" height="40" rx="16" fill="url(#shoulder)" stroke="#1b1e23" stroke-width="2.5"/>'
+        s += f'<rect x="{x+14}" y="110" width="84" height="6" rx="3" fill="#fff" opacity="0.18"/>'
+    s += f'<path d="{BODY}" transform="translate(0,8)" fill="#000" opacity="0.35" filter="url(#shade)"/>'
+    s += f'<path d="{BODY}" fill="url(#shell)" stroke="#7e8691" stroke-width="3"/>'
+    s += f'<path d="{BODY}" fill="url(#edge)"/>'
+    s += ('<path d="M150,150 C200,142 230,141 256,141 C282,141 312,142 362,150" fill="none" stroke="#fff" '
+          'stroke-width="5" stroke-linecap="round" opacity="0.9"/>')  # the top's highlight
+    # the centre: two small buttons and a round one, ringed in the menus' blue
+    for cx in (196, 316):
+        s += f'<rect x="{cx-6}" y="186" width="12" height="26" rx="6" fill="#d3d8df" stroke="#8a929c" stroke-width="2"/>'
+    s += ('<circle cx="256" cy="230" r="17" fill="url(#cap)" stroke="#8a929c" stroke-width="2"/>'
+          '<circle cx="256" cy="230" r="10" fill="none" stroke="#4fa3f7" stroke-width="3"/>')
+    s += dpad(128, 216)
+    s += stick(190, 300) + stick(322, 300)
     # the face buttons: Triangle at the top, Circle right, Cross at the bottom, Square left
     for kind, dx, dy in (('triangle', 0, -1), ('circle', 1, 0), ('cross', 0, 1), ('square', -1, 0)):
-        s += button(kind, 402 + dx * 36, 222 + dy * 36, 21)
+        s += face(kind, 384 + dx * 36, 216 + dy * 36, 20)
     return f'<g transform="{FIT}">{s}</g>'
 
 
 def outline():
     """the controller's shape in white, for its glow"""
     s = f'<path d="{BODY}" fill="#fff"/>'
-    s += ''.join(f'<rect x="{x}" y="96" width="112" height="40" rx="18" fill="#fff"/>' for x in SHOULDERS)
+    s += ''.join(f'<rect x="{x}" y="104" width="112" height="40" rx="16" fill="#fff"/>' for x in SHOULDERS)
     return f'<g transform="{FIT}">{s}</g>'
 
 
