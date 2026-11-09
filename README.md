@@ -25,8 +25,11 @@ handles the console's graphics (Direct3D 8 on Vulkan, through Mesa's RADV), soun
 - Rendered at 1080p, 1620p or 4K, output at 3840x2160, at the game's own 60 fps. The game has no widescreen mode on
   the Xbox, so the picture stays 4:3 with bars at the sides.
 - DualSense controllers, up to four players in split screen (sign in more users on the PS5; guests are enough).
-- An in-game menu on L3 + R3: render resolution, V-Sync, frame rate counter, texture filtering, vibration, stick
-  deadzone and trigger threshold.
+- A sharp picture: the soft filter the game applied for TVs of its day is off (the menu turns it back on), and
+  textures get 16x filtering.
+- The game's text names the PS5: "Please don't turn off your PS5 console", "PS5 storage".
+- An in-game menu on L3 + R3: render resolution, V-Sync, frame rate counter, texture filtering, the Xbox soft
+  filter, vibration, stick deadzone and trigger threshold.
 - The first start unpacks your disc image, then the game starts straight away from then on.
 
 ## Requirements

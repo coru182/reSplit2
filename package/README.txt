@@ -1,4 +1,4 @@
-reSplit2 0.1.0 - TimeSplitters 2 (US Xbox), recompiled for the PS5
+reSplit2 0.1.1 - TimeSplitters 2 (US Xbox), recompiled for the PS5
 ==================================================================
 
 A test build. An unofficial fan port: the original Xbox game's code, statically recompiled into a native PS5 app.
@@ -51,8 +51,9 @@ In-game menu
 Press L3 + R3 (both sticks in) at any time. The game stands still behind it. Move with the d-pad or left stick,
 Cross to choose, L1 / R1 to change page, and Circle, Options or L3 + R3 to go back to the game.
 
-  Picture   render resolution (1080p, 1620p, 4K), V-Sync, frame rate counter, texture filtering and sharpness,
-            smooth menus and HUD
+  Picture   render resolution (1080p, 1620p, 4K), V-Sync, frame rate counter, texture filtering (16x by default)
+            and sharpness, smooth menus and HUD, the Xbox soft filter (off by default: the game softened its picture
+            for old TVs, which looks blurry at 4K)
   Controls  vibration, stick deadzone, trigger threshold
 
 Changes apply at once and are saved when you close the menu.

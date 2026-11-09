@@ -23,10 +23,24 @@ Settings& Get() {
     return s;
 }
 void Load() {
+    // the PS5's defaults where they differ from the PC's: 16x texture filtering (walls and floors seen at an angle
+    // stay sharp at 4K; the GPU hardly notices)
+    Get().aniso = 16;
     std::error_code ec;
     const bool first = !std::filesystem::exists(SettingsFile(), ec);
     std::string error;
     if (!cfg::Read(SettingsFile().string(), SettingsList(), error)) LOGE("settings: %s", error.c_str());
+    // 0.1.0 wrote texture filtering off into the settings file: turned up once (the marker records it), and from
+    // then on the menu's choice stands
+    const std::filesystem::path mark = ps5::DataDir() / "defaults-0.1.1";
+    if (!std::filesystem::exists(mark, ec)) {
+        if (!first && Get().aniso == 0) {
+            Get().aniso = 16;
+            LOGI("settings: texture filtering 16x (the PS5's default since 0.1.1)");
+            if (!cfg::Write(SettingsFile().string(), SettingsList())) LOGE("settings: could not write %s", SettingsFile().c_str());
+        }
+        if (FILE* f = std::fopen(mark.c_str(), "w")) std::fclose(f);
+    }
     Settings& s = Get();
     s.renderer = 1;                  // Vulkan: the only renderer here
     s.display_mode = DisplayMode::Fullscreen;

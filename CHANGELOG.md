@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.1
+
+- **A sharp picture.** Every frame of play, the game blended its finished picture over itself one console pixel
+  off, softening it for the TVs of its day. At 4K that pixel is four and a half, so edges looked doubled and blurry.
+  Those two passes are now left out; the menu's new **Xbox soft filter** brings them back for the console's look.
+  The game's own effects (motion blur when turning, damage and stun effects) are unchanged.
+- **16x texture filtering by default.** Floors and walls seen at an angle, like the tunnel at the start of Siberia,
+  stay sharp. Settings files from 0.1.0 are turned up once; after that the menu's choice stands.
+- **PS5 in the game's text.** "Please don't turn off your Xbox console" and the save device's "Xbox hard disk" now say
+  PS5 ("PS5 storage"), in every language the game carries.
+
 ## 0.1.0
 
 The first test build: TimeSplitters 2 (US Xbox) statically recompiled into a native PS5 app.
