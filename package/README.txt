@@ -1,4 +1,4 @@
-reSplit2 0.1.3 - TimeSplitters 2 (US Xbox), recompiled for the PS5
+reSplit2 0.1.4 - TimeSplitters 2 (US Xbox), recompiled for the PS5
 ==================================================================
 
 A test build. An unofficial fan port: the original Xbox game's code, statically recompiled into a native PS5 app.
@@ -51,6 +51,8 @@ users on the PS5 (guests are enough) and turn on their controllers.
 L2 aims and R2 fires. On the Xbox both triggers fired and a click of the right stick aimed; L2 and the click trade
 places, so nothing is lost. For aiming only while L2 is held, set the game's Controls > Aim Mode to Hold. The
 settings menu's "Left trigger aims" (Controls page) turns this off, for the Xbox layout.
+
+The menus and prompts show PlayStation buttons: Cross for the Xbox's A, Circle for B, Square for X, Triangle for Y.
 
 The game has no widescreen mode on the Xbox, so it keeps its 4:3 picture with bars at the sides.
 

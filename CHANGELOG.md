@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4
+
+- **PlayStation buttons.** The menus' and prompts' Xbox buttons are drawn as PlayStation ones, four times sharper:
+  A is Cross, B Circle, X Square and Y Triangle, as the DualSense's buttons are mapped ("Select", "Back", "Add",
+  "Cancel"...). The game's button sheet gets Options and the touch pad for Start and Back. They are reSplit2's own
+  drawings (`game/art`, `tools/mkbuttons.py`).
+
 ## 0.1.3
 
 - **L2 aims, R2 fires.** The Xbox game fired with both triggers (the left one is Alternate Fire, or the left gun of

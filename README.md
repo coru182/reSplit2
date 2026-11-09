@@ -62,6 +62,7 @@ services.
   it back), and textures get 16x filtering.
 - **The console's own look.** TimeSplitters 2 had no widescreen mode on the Xbox, so its 4:3 picture keeps its
   shape, with bars at the sides. The lens flares, motion blur and screen effects are the game's.
+- **PlayStation buttons.** The menus and prompts show Cross, Circle, Square and Triangle, drawn four times sharper.
 - **PS5 in the game's text.** "Please don't turn off your PS5 console", and your saves live on "PS5 storage".
 - **Four-player split screen.** Sign in more users on the PS5 (guests are enough) and turn on their controllers.
 - **L2 aims, R2 fires**, as in today's shooters (the menu brings back the Xbox layout).
@@ -226,7 +227,7 @@ own `.iso`. Only whoever makes a release builds it from their own disc, once per
   TimeSplitters 2, found with Cxbx-Reloaded's
   [XbSymbolDatabase](https://github.com/Cxbx-Reloaded/XbSymbolDatabase) and by hand, and the game's hooks), and
   `src/`: the hooks (the disc check, one frame per 60 Hz blank, the soft filter switch, the PS5 in the game's text,
-  the trigger layout).
+  the trigger layout) and the PlayStation buttons drawn over the Xbox ones (`art/`, made by `tools/mkbuttons.py`).
 - `patches/athelas-ps5.patch`: the SDK's changes for the PS5, from reKing: guest memory on 16 KiB pages, threads,
   the Vulkan surface on VideoOut, a logging switch.
 - `patches/ts2-sdk.patch`: TimeSplitters 2's: XDK 4721's layout, the vertex and pixel shader programs it sets

@@ -64,7 +64,10 @@ std::string Rewrite(const std::string& s) {
 
 }  // namespace
 
+void PlayStationButtons();  // ts2_buttons.cpp
+
 void PatchText() {
+    PlayStationButtons();
     uint8_t* p = static_cast<uint8_t*>(kernel::HostPtr(kTextFrom));
     const size_t n = kTextTo - kTextFrom;
     int changed = 0;
